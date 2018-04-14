@@ -6,12 +6,21 @@ using System.Threading.Tasks;
 
 namespace CatalogPrinter
 {
+    public enum CatalogTypeEnum
+    {
+        NONSELECTED,
+        DAKWERKER,
+        VERANDA,
+        AANNEMER,
+        PARTICULIER
+    }
+
     public class CatalogType
     {
         public string Text { get; }
-        public int Value { get; }
+        public CatalogTypeEnum Value { get; }
 
-        public CatalogType(string t, int v)
+        public CatalogType(string t, CatalogTypeEnum v)
         {
             Text = t;
             Value = v;

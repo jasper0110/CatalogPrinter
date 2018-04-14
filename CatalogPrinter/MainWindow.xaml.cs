@@ -37,11 +37,21 @@ namespace CatalogPrinter
         public MainWindow()
         {
             InitializeComponent();
-            CatalogTypeComboBox.Items.Add(new CatalogType("Dakwerker", 1));
-            CatalogTypeComboBox.Items.Add(new CatalogType("Veranda", 2));
-            CatalogTypeComboBox.Items.Add(new CatalogType("Aannemer", 3));
-            CatalogTypeComboBox.Items.Add(new CatalogType("Particulier", 4));
-            //CatalogTypeComboBox.IsDropDownOpen = true;
+            //CatalogTypeComboBox.Items.Add(new CatalogType("Selecteer cataloog type", CatalogTypeEnum.NONSELECTED));
+            CatalogTypeComboBox.Items.Add(new CatalogType("Dakwerker", CatalogTypeEnum.DAKWERKER));
+            CatalogTypeComboBox.Items.Add(new CatalogType("Veranda", CatalogTypeEnum.VERANDA));
+            CatalogTypeComboBox.Items.Add(new CatalogType("Aannemer", CatalogTypeEnum.AANNEMER));
+            CatalogTypeComboBox.Items.Add(new CatalogType("Particulier", CatalogTypeEnum.PARTICULIER));
+            int selectedIndex = -1;
+            foreach(var item in CatalogTypeComboBox.Items)
+            {
+                CatalogType type = item as CatalogType;
+                if (type.Value == CatalogTypeEnum.DAKWERKER)
+                    selectedIndex = CatalogTypeComboBox.Items.IndexOf(item);
+
+            }
+            //int index = CatalogTypeComboBox.Items.IndexOf(CatalogTypeComboBox.Items.Cast<object>().Where(i => (i as CatalogType)?.Value == CatalogTypeEnum.NONSELECTED));
+            CatalogTypeComboBox.SelectedIndex = selectedIndex;
         }
 
         private void SheetOrderInput_TextChanged(object sender, TextChangedEventArgs e)
@@ -63,11 +73,14 @@ namespace CatalogPrinter
                     throw new Exception($"Workbook " + WorkbookInputFile.Text + " not found!");
                 string outputDir = new FileInfo(WorkbookInputFile.Text).Directory.FullName;
 
-                // get sheet order input
-                string sheetOrderString = SheetOrderInput.Text.Replace("\r", string.Empty);
-                SheetOrder = sheetOrderString.Split('\n').Where(s => s != "").ToList();
-                if (SheetOrder.Count == 0)
-                    throw new Exception($"No sheet entries found!");
+                // get catalog type
+                string catalogType = CatalogTypeComboBox.SelectedItem.ToString();
+
+                //// get sheet order input
+                //string sheetOrderString = SheetOrderInput.Text.Replace("\r", string.Empty);
+                //SheetOrder = sheetOrderString.Split('\n').Where(s => s != "").ToList();
+                //if (SheetOrder.Count == 0)
+                //    throw new Exception($"No sheet entries found!");
 
                 //// set PDF pinter name
                 //var printers = System.Drawing.Printing.PrinterSettings.InstalledPrinters;
@@ -86,10 +99,41 @@ namespace CatalogPrinter
                 string file = WorkbookInputFile.Text;
                 Workbook = Excel.Workbooks.Open(file);
 
+                // get sheet order from first sheet in the workbook
+                int startCol = 1;
+                int maxCol = 100;
+                int selectedCol = 0;
+                for (int i = startCol; i < maxCol; i++)
+                {
+                    Range currentRange = Workbook.Worksheets[1].Cells[1, i] as Range;
+                    if (currentRange?.Value?.ToString() == catalogType)
+                    {
+                        selectedCol = i;
+                        break;
+                    }
+                }
+                if(selectedCol < 1)
+                    throw new Exception(catalogType + " not found in sheet " + Workbook.Worksheets[1].Name);
+
+                Range startCell = Workbook.Worksheets[1].Cells[2, selectedCol];
+                int lastRow = Workbook.Worksheets[1].Cells[2, selectedCol].End(XlDirection.xlDown).Row;
+                Range endCell = Workbook.Worksheets[1].Cells[lastRow, selectedCol];
+                Range sheetsToPrint = Workbook.Worksheets[1].Range[startCell, endCell];
+                SheetOrder.Clear();
+                foreach(var cell in sheetsToPrint)
+                {
+                    Range cellRange = cell as Range;
+                    var cellValue = cellRange?.Value;
+                    string cellString = cellValue.ToString();
+                    SheetOrder.Add(cellString);
+                }
+
                 foreach (var shName in SheetOrder)
                 {
                     if(Workbook.Sheets[shName] == null)
                         throw new Exception($"Sheet " + shName + " not found in workbook " + WorkbookInputFile.Text);
+                    // set catalog type
+                    Workbook.Sheets[shName].Cells[11, 2] = catalogType;
                     Workbook.Sheets[shName].Copy(After: Workbook2Print.Sheets[Workbook2Print.Sheets.Count]);
                 }
                 // delete default first sheet "Sheet1" on creation of workbook
@@ -153,6 +197,11 @@ namespace CatalogPrinter
             sh.PageSetup.BottomMargin = Excel.InchesToPoints(0.75);
             sh.PageSetup.HeaderMargin = Excel.InchesToPoints(0.3);
             sh.PageSetup.FooterMargin = Excel.InchesToPoints(0.3);
+        }
+
+        private void CatalogTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            CatalogTypeComboBox.Text = CatalogTypeComboBox.SelectedItem.ToString();
         }
     }
 }
