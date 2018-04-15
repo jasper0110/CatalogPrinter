@@ -16,6 +16,9 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Microsoft.Office.Interop.Excel;
 using System.Drawing;
+using System.Xml;
+using System.Configuration;
+using Encrypter;
 
 namespace CatalogPrinter
 {
@@ -49,7 +52,7 @@ namespace CatalogPrinter
                 if (type.Value == CatalogTypeEnum.DAKWERKER)
                     CatalogTypeComboBox.SelectedIndex = CatalogTypeComboBox.Items.IndexOf(item);
 
-            }
+            }           
         }
 
         private void Print_Button_Click(object sender, RoutedEventArgs e)
@@ -79,7 +82,9 @@ namespace CatalogPrinter
                 //Workbook2Print = Excel.Workbooks.Open(_tmpExcel);
 
                 // open master workbook
-                Workbook = Excel.Workbooks.Open(MasterDocInputFile.Text);
+                string hash = ConfigurationManager.AppSettings["password"];
+                string password = HashUtil.Decrypt(hash);
+                Workbook = Excel.Workbooks.Open(MasterDocInputFile.Text, Password: password);
 
                 // get sheet order to print
                 var sheetOrder = GetSheetOrder(catalogType);
@@ -91,14 +96,26 @@ namespace CatalogPrinter
                         throw new Exception($"Sheet " + shName + " not found in workbook " + MasterDocInputFile.Text);
                     // set catalog type
                     Workbook.Sheets[shName].Cells[11, 2] = catalogType;
-                    Workbook.Sheets[shName].Copy(After: Workbook2Print.Sheets[Workbook2Print.Sheets.Count]);
+
+                    // copy sheet
+                    if (catalogType == "Particulier")
+                    {
+                        SetBtwField(Workbook.Sheets[shName], true);
+                        Workbook.Sheets[shName].Copy(After: Workbook2Print.Sheets[Workbook2Print.Sheets.Count]);
+                        SetBtwField(Workbook.Sheets[shName], false);
+                        Workbook.Sheets[shName].Copy(After: Workbook2Print.Sheets[Workbook2Print.Sheets.Count]);
+                    }
+                    else
+                    {
+                        Workbook.Sheets[shName].Copy(After: Workbook2Print.Sheets[Workbook2Print.Sheets.Count]);
+                    }
                 }
                 // delete default first sheet on creation of workbook
                 Workbook2Print.Activate();
                 Workbook2Print.Worksheets[1].Delete();
 
                 // format and print sheets
-                string outputFile = outputDir + @"\Catalog.pdf";
+                string outputFile = @"C:\Users\Jasper\Desktop\Catalog.pdf";
                 foreach (Worksheet sh in Workbook2Print.Worksheets)
                     FormatSheet(sh);
                 Workbook2Print.ExportAsFixedFormat(XlFixedFormatType.xlTypePDF, outputFile);
@@ -127,7 +144,14 @@ namespace CatalogPrinter
             }
         }
 
-        private void FormatSheet(Worksheet sh)
+        private void SetBtwField(Worksheet sh, bool btwIncl)
+        {
+            string value = btwIncl ? "ja" : "neen";
+            Range btwCell = sh.Cells[8, 2];
+            sh.Cells[8, 2] = value;
+        }
+
+            private void FormatSheet(Worksheet sh)
         {
             string leftHeader = (sh.Cells[16, 2] as Range).Value as string ?? "null";
             string centerHeader = (sh.Cells[17, 2] as Range).Value as string ?? "null";
