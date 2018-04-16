@@ -10,56 +10,24 @@ namespace EncrypterApp
 {
     class Program
     {
-        static void Main(string[] args)
+        static string GetPasswordFromConsole()
         {
             ConsoleKeyInfo key;
-
-//            string user = "";
-//            Console.Write("Enter your username: ");
-
-//            do
-//            {
-//                key = Console.ReadKey(true);
-//                // Backspace Should Not Work
-//                if (key.Key != ConsoleKey.Backspace && key.Key != ConsoleKey.Enter)
-//                {
-//                    user += key.KeyChar;
-//                    Console.Write(key.KeyChar);
-//                }
-//                else
-//                {
-//                    if (key.Key == ConsoleKey.Backspace && user.Length > 0)
-//                    {
-//                        user = user.Substring(0, (user.Length - 1));
-//                        Console.Write("\b \b");
-//                    }
-//                }
-//            }
-//            // Stops Receving Keys Once Enter is Pressed
-//            while (key.Key != ConsoleKey.Enter);
-
-//            Console.WriteLine();
-//#if DEBUG
-//            Console.WriteLine("The User You entered is : " + user);
-//#endif
-
-            string pass = "";
-            Console.Write("Enter your password: ");
-
+            string password = "";
             do
             {
                 key = Console.ReadKey(true);
                 // Backspace Should Not Work
                 if (key.Key != ConsoleKey.Backspace && key.Key != ConsoleKey.Enter)
                 {
-                    pass += key.KeyChar;
+                    password += key.KeyChar;
                     Console.Write("*");
                 }
                 else
                 {
-                    if (key.Key == ConsoleKey.Backspace && pass.Length > 0)
+                    if (key.Key == ConsoleKey.Backspace && password.Length > 0)
                     {
-                        pass = pass.Substring(0, (pass.Length - 1));
+                        password = password.Substring(0, (password.Length - 1));
                         Console.Write("\b \b");
                     }
                 }
@@ -68,12 +36,32 @@ namespace EncrypterApp
             while (key.Key != ConsoleKey.Enter);
 
             Console.WriteLine();
+            return password;
+        }
+
+        static void Main(string[] args)
+        {
+            string firstPassword = "";
+            string secondPassword = "";
+            do
+            {
+                if(firstPassword != secondPassword)
+                    Console.WriteLine("Passwords do not match!");
+
+                Console.Write("Enter your password: ");
+                firstPassword = GetPasswordFromConsole();
+                Console.Write("Confirm your password: ");
+                secondPassword = GetPasswordFromConsole();
+            }
+            while (firstPassword != secondPassword);
+
 #if DEBUG
-            Console.WriteLine("The Password You entered is : " + pass);
-            Console.WriteLine("The Hash : " + Encrypter.HashUtil.Encrypt(pass));
+            Console.WriteLine("The Password You entered is : " + firstPassword);
+            Console.WriteLine("The Hash : " + Encrypter.HashUtil.Encrypt(firstPassword));
 #endif
             string configPath = ConfigurationManager.AppSettings["ConfigPath"];
-            XMLUtility.WriteToXml(configPath, new KeyValuePair<string, string>("password", Encrypter.HashUtil.Encrypt(pass)));
+            XMLUtility.WriteToXml(configPath, new KeyValuePair<string, string>("password", Encrypter.HashUtil.Encrypt(firstPassword)));
+            Console.WriteLine("Press Enter to close the application...");
             Console.ReadLine();
         }
     }
