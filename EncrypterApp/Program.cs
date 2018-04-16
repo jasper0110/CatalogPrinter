@@ -1,4 +1,6 @@
-﻿using System;
+﻿using ExcelUtil;
+using Microsoft.Office.Interop.Excel;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
@@ -60,7 +62,20 @@ namespace EncrypterApp
             Console.WriteLine("The Hash : " + Encrypter.HashUtil.Encrypt(firstPassword));
 #endif
             string configPath = ConfigurationManager.AppSettings["ConfigPath"];
-            XMLUtility.WriteToXml(configPath, new KeyValuePair<string, string>("password", Encrypter.HashUtil.Encrypt(firstPassword)));
+            string masterCatalog = ConfigurationManager.AppSettings["MasterCatalog"];
+            string oldPassword = ConfigurationManager.AppSettings["password"];
+
+            // change password op workbook
+            Workbook wb = ExcelUtil.ExcelUtility.GetWorkbook(masterCatalog, Encrypter.HashUtil.Decrypt(oldPassword));
+            wb.Protect(firstPassword);
+            wb.Close(true);
+
+            string encryptedPassword = Encrypter.HashUtil.Encrypt(firstPassword);
+
+            // write encrypted password to this App.config and to the App.config of the CatalogPrinter application
+            ConfigurationManager.AppSettings["password"] = encryptedPassword;
+            XMLUtility.WriteToXml(configPath, new KeyValuePair<string, string>("password", encryptedPassword));
+
             Console.WriteLine("Press Enter to close the application...");
             Console.ReadLine();
         }
