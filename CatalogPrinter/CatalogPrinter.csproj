@@ -134,4 +134,7 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>xcopy "$(SolutionDir)CatalogPrinter.config" "$(ProjectDir)$(OutDir)"  /Q /Y</PostBuildEvent>
+  </PropertyGroup>
 </Project>

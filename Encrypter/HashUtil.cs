@@ -10,7 +10,7 @@ namespace Encrypter
 {
     public static class HashUtil
     {
-        static readonly string PasswordHash = "P@@Sw0rd";
+        static readonly string PasswordHash = "J@sP€r";
         static readonly string SaltKey = "S@LT&KEY";
         static readonly string VIKey = "@1B2c3D4e5F6g7H8";
 

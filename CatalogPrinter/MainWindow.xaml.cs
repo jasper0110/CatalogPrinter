@@ -68,12 +68,19 @@ namespace CatalogPrinter
                 Configuration config = ConfigurationManager.OpenMappedExeConfiguration(configMap, ConfigurationUserLevel.None);
                 var appSettings = config.GetSection("appSettings") as AppSettingsSection;
                 // get config values
-                string hash = appSettings.Settings["password"].Value;
-                string masterCatalog = appSettings.Settings["masterCatalog"].Value;
-                string clientCatalog = appSettings.Settings["clientCatalog"].Value;
+                string hash = appSettings.Settings["password"]?.Value;
+                string masterCatalog = appSettings.Settings["masterCatalog"]?.Value;
+                string clientCatalog = appSettings.Settings["clientCatalog"]?.Value;
+                string outputPath = appSettings.Settings["outputPath"]?.Value;
 
-                // get output dir
-                string outputDir = new FileInfo(clientCatalog).Directory.FullName;
+                if(hash == null)
+                    throw new Exception($"Could not find 'password' key in " + configPath + "!");
+                if (masterCatalog == null)
+                    throw new Exception($"Could not find 'masterCatalog' key in " + configPath + "!");
+                if (clientCatalog == null)
+                    throw new Exception($"Could not find 'clientCatalog' key in " + configPath + "!");
+                if (outputPath == null)
+                    throw new Exception($"Could not find 'outputPath' key in " + configPath + "!");
 
                 // check if files exists
                 if (!File.Exists(masterCatalog))
@@ -122,7 +129,7 @@ namespace CatalogPrinter
                 Workbook2Print.Worksheets[1].Delete();
 
                 // format and print sheets
-                string outputFile = @"C:\Users\Jasper\Desktop\Catalog.pdf";
+                string outputFile = outputPath + @"\catalog.pdf";
                 foreach (Worksheet sh in Workbook2Print.Worksheets)
                     FormatSheet(sh);
                 Workbook2Print.ExportAsFixedFormat(XlFixedFormatType.xlTypePDF, outputFile);                
