@@ -55,10 +55,6 @@
       <Project>{eee0e1fa-5cc5-4ae4-98e2-3697dfc05d24}</Project>
       <Name>ExcelUtil</Name>
     </ProjectReference>
-    <ProjectReference Include="..\XMLUtil\XMLUtil.csproj">
-      <Project>{84944186-6e98-4a10-905d-3b5dcdc6a7c7}</Project>
-      <Name>XMLUtil</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="Microsoft.Office.Core">

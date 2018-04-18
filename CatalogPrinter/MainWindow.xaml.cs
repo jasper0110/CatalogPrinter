@@ -130,6 +130,8 @@ namespace CatalogPrinter
 
                 // format and print sheets
                 string outputFile = outputPath + @"\catalog.pdf";
+                if (ExcelUtility.IsFileInUse(outputFile))
+                    throw new Exception(outputFile + " is open, please close it and press 'Print' again.");
                 foreach (Worksheet sh in Workbook2Print.Worksheets)
                     FormatSheet(sh);
                 Workbook2Print.ExportAsFixedFormat(XlFixedFormatType.xlTypePDF, outputFile);                
@@ -233,21 +235,6 @@ namespace CatalogPrinter
         private void CatalogTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             CatalogTypeComboBox.Text = CatalogTypeComboBox.SelectedItem.ToString();
-        }
-
-        private void SheetOrderInputFile_TextChanged(object sender, TextChangedEventArgs e)
-        {
-
-        }
-
-        private void SheetOrderInput_TextChanged(object sender, TextChangedEventArgs e)
-        {
-
-        }
-
-        private void MasterDocInputFile_TextChanged(object sender, TextChangedEventArgs e)
-        {
-
         }
     }
 }
