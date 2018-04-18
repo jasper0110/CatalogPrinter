@@ -131,6 +131,10 @@
       <Project>{bdc4976e-85ae-4ee7-b32c-f85a2f47169d}</Project>
       <Name>Encrypter</Name>
     </ProjectReference>
+    <ProjectReference Include="..\ExcelUtil\ExcelUtil.csproj">
+      <Project>{EEE0E1FA-5CC5-4AE4-98E2-3697DFC05D24}</Project>
+      <Name>ExcelUtil</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

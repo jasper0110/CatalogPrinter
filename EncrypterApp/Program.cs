@@ -3,10 +3,12 @@ using Microsoft.Office.Interop.Excel;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XMLUtil;
+using Encrypter;
 
 namespace EncrypterApp
 {
@@ -59,24 +61,49 @@ namespace EncrypterApp
 
 #if DEBUG
             Console.WriteLine("The Password You entered is : " + firstPassword);
-            Console.WriteLine("The Hash : " + Encrypter.HashUtil.Encrypt(firstPassword));
+            Console.WriteLine("The Hash : " + HashUtil.Encrypt(firstPassword));
 #endif
-            string configPath = ConfigurationManager.AppSettings["ConfigPath"];
-            string masterCatalog = ConfigurationManager.AppSettings["MasterCatalog"];
-            string oldPassword = ConfigurationManager.AppSettings["password"];
+            try
+            {
+                // open config
+                string configPath = Directory.GetCurrentDirectory() + @"\CatalogPrinter.config";
+                if (!File.Exists(configPath))
+                    throw new Exception($"Config file " + configPath + " not found!");
+                ExeConfigurationFileMap configMap = new ExeConfigurationFileMap();
+                configMap.ExeConfigFilename = configPath;
+                Configuration config = ConfigurationManager.OpenMappedExeConfiguration(configMap, ConfigurationUserLevel.None);
+                var appSettings = config.GetSection("appSettings") as AppSettingsSection;
+                // get config values
+                string oldHash = appSettings.Settings["password"].Value;
+                string masterCatalog = appSettings.Settings["masterCatalog"].Value;
 
-            // change password op workbook
-            Workbook wb = ExcelUtil.ExcelUtility.GetWorkbook(masterCatalog, Encrypter.HashUtil.Decrypt(oldPassword));
-            wb.Protect(firstPassword);
-            wb.Close(true);
+                // encrypt new password
+                string encryptedPassword = HashUtil.Encrypt(firstPassword);
 
-            string encryptedPassword = Encrypter.HashUtil.Encrypt(firstPassword);
+                // try opening catalog with old password and change the password
+                if (!File.Exists(masterCatalog))
+                    throw new Exception($"Workbook " + masterCatalog + " not found!");
+                Console.WriteLine("Changing the password...");
+                string oldPassword = HashUtil.Decrypt(oldHash);
+                Workbook wb = ExcelUtility.GetWorkbook(masterCatalog, oldPassword);
+                if (wb == null)
+                    throw new Exception($"Wrong password for workbook " + masterCatalog + "!");
+                wb.Password = firstPassword;
+                ExcelUtility.CloseWorkbook(wb, true);
 
-            // write encrypted password to this App.config and to the App.config of the CatalogPrinter application
-            ConfigurationManager.AppSettings["password"] = encryptedPassword;
-            XMLUtility.WriteToXml(configPath, new KeyValuePair<string, string>("password", encryptedPassword));
+                // write new encrypted password to config
+                appSettings.Settings["password"].Value = encryptedPassword;
+                config.Save(ConfigurationSaveMode.Modified);
 
-            Console.WriteLine("Press Enter to close the application...");
+                Console.WriteLine("Success! Press Enter to close the application.");
+
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Console.WriteLine("Error! Could not change the password!");
+            }
+
             Console.ReadLine();
         }
     }

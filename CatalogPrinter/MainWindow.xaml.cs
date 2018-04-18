@@ -19,6 +19,7 @@ using System.Drawing;
 using System.Xml;
 using System.Configuration;
 using Encrypter;
+using ExcelUtil;
 
 namespace CatalogPrinter
 {
@@ -27,12 +28,11 @@ namespace CatalogPrinter
     /// </summary>
     public partial class MainWindow : System.Windows.Window
     {
-        public Microsoft.Office.Interop.Excel.Application Excel { get; set; }
         public Workbook Workbook { get; set; }
         public Workbook WorkbookSheetOrder { get; set; }
         public Workbook Workbook2Print { get; set; }
 
-        private readonly string _tmpExcel = @"C:\Temp\Test.xlsx";
+        private readonly string _tmpWorkbook = @"C:\temp\temp.xlsx";
 
         public MainWindow()
         {
@@ -59,41 +59,50 @@ namespace CatalogPrinter
         {
             try
             {
-                // check if files exists
-                if(!File.Exists(MasterDocInputFile.Text))
-                    throw new Exception($"Workbook " + MasterDocInputFile.Text + " not found!");
-                if (!File.Exists(SheetOrderInputFile.Text))
-                    throw new Exception($"Workbook " + SheetOrderInputFile.Text + " not found!");
+                // open config
+                string configPath = Directory.GetCurrentDirectory() + @"\CatalogPrinter.config";
+                if (!File.Exists(configPath))
+                    throw new Exception($"Config file " + configPath + " not found!");
+                ExeConfigurationFileMap configMap = new ExeConfigurationFileMap();
+                configMap.ExeConfigFilename = configPath;
+                Configuration config = ConfigurationManager.OpenMappedExeConfiguration(configMap, ConfigurationUserLevel.None);
+                var appSettings = config.GetSection("appSettings") as AppSettingsSection;
+                // get config values
+                string hash = appSettings.Settings["password"].Value;
+                string masterCatalog = appSettings.Settings["masterCatalog"].Value;
+                string clientCatalog = appSettings.Settings["clientCatalog"].Value;
 
                 // get output dir
-                string outputDir = new FileInfo(SheetOrderInputFile.Text).Directory.FullName;
+                string outputDir = new FileInfo(clientCatalog).Directory.FullName;
+
+                // check if files exists
+                if (!File.Exists(masterCatalog))
+                    throw new Exception($"Workbook " + masterCatalog + " not found!");
+                if (!File.Exists(clientCatalog))
+                    throw new Exception($"Workbook " + clientCatalog + " not found!");
+
+                // open master workbook
+                string password = HashUtil.Decrypt(hash);
+                Workbook = ExcelUtility.GetWorkbook(masterCatalog, password);
 
                 // get catalog type
                 string catalogType = CatalogTypeComboBox.SelectedItem.ToString();
 
-                // start Excel 
-                Excel = new Microsoft.Office.Interop.Excel.Application();
-                Excel.DisplayAlerts = false;
-
                 // open temp workbook to which the sheets of interest are copied to
-                Workbook2Print = Excel.Workbooks.Add();
-                Workbook2Print?.SaveAs(_tmpExcel);
+                Workbook2Print = ExcelUtility.XlApp.Workbooks.Add();
+                Workbook2Print?.SaveAs(_tmpWorkbook);
                 //Workbook2Print?.Close(true);
-                //Workbook2Print = Excel.Workbooks.Open(_tmpExcel);
-
-                // open master workbook
-                string hash = ConfigurationManager.AppSettings["password"];
-                string password = HashUtil.Decrypt(hash);
-                Workbook = Excel.Workbooks.Open(MasterDocInputFile.Text, Password: password);
+                //Workbook2Print = Excel.Workbooks.Open(_tmpWorkbook);
 
                 // get sheet order to print
-                var sheetOrder = GetSheetOrder(catalogType);
+                var sheetOrder = GetSheetOrder(catalogType, clientCatalog);
 
                 // copy necessary sheets to temp workbook and put sheets in correct order
                 foreach (var shName in sheetOrder)
                 {
-                    if(Workbook.Sheets[shName] == null)
-                        throw new Exception($"Sheet " + shName + " not found in workbook " + MasterDocInputFile.Text);
+                    if (ExcelUtility.GetWorksheetByName(Workbook, shName) == null)
+                        throw new Exception($"Sheet " + shName + " not found in workbook " + masterCatalog + "!" +
+                            "\nPlease check the sheet order input in " + clientCatalog + " for " + catalogType + ".");
                     // set catalog type
                     Workbook.Sheets[shName].Cells[11, 2] = catalogType;
 
@@ -118,7 +127,7 @@ namespace CatalogPrinter
                 string outputFile = @"C:\Users\Jasper\Desktop\Catalog.pdf";
                 foreach (Worksheet sh in Workbook2Print.Worksheets)
                     FormatSheet(sh);
-                Workbook2Print.ExportAsFixedFormat(XlFixedFormatType.xlTypePDF, outputFile);
+                Workbook2Print.ExportAsFixedFormat(XlFixedFormatType.xlTypePDF, outputFile);                
 
                 MessageBox.Show("Done!");
 
@@ -129,18 +138,12 @@ namespace CatalogPrinter
             }
             finally
             {
-                Workbook?.Close(false);
-                WorkbookSheetOrder?.Close(false);
-                Workbook2Print?.Close(true);
-                Excel?.Quit();
-                if(Excel!=null)
-                    Marshal.ReleaseComObject(Excel);
-                if(Workbook!=null)
-                    Marshal.ReleaseComObject(Workbook);
-                if (WorkbookSheetOrder != null)
-                    Marshal.ReleaseComObject(WorkbookSheetOrder);
-                if (Workbook2Print != null)
-                    Marshal.ReleaseComObject(Workbook2Print);
+                ExcelUtility.CloseWorkbook(Workbook, false);
+                ExcelUtility.CloseWorkbook(WorkbookSheetOrder, false);
+                ExcelUtility.CloseWorkbook(Workbook2Print, true);
+                File.Delete(_tmpWorkbook);
+
+                ExcelUtility.CloseExcel();
             }
         }
 
@@ -176,20 +179,21 @@ namespace CatalogPrinter
             sh.PageSetup.CenterVertically = true;
             sh.PageSetup.CenterHorizontally = true;
 
-            sh.PageSetup.LeftMargin = Excel.InchesToPoints(0.7);
-            sh.PageSetup.RightMargin = Excel.InchesToPoints(0.7);
-            sh.PageSetup.TopMargin = Excel.InchesToPoints(0.75);
-            sh.PageSetup.BottomMargin = Excel.InchesToPoints(0.75);
-            sh.PageSetup.HeaderMargin = Excel.InchesToPoints(0.3);
-            sh.PageSetup.FooterMargin = Excel.InchesToPoints(0.3);
+            sh.PageSetup.LeftMargin = ExcelUtility.XlApp.InchesToPoints(0.7);
+            sh.PageSetup.RightMargin = ExcelUtility.XlApp.InchesToPoints(0.7);
+            sh.PageSetup.TopMargin = ExcelUtility.XlApp.InchesToPoints(0.75);
+            sh.PageSetup.BottomMargin = ExcelUtility.XlApp.InchesToPoints(0.75);
+            sh.PageSetup.HeaderMargin = ExcelUtility.XlApp.InchesToPoints(0.3);
+            sh.PageSetup.FooterMargin = ExcelUtility.XlApp.InchesToPoints(0.3);
         }
 
-        private List<string> GetSheetOrder(string catalogType)
+        private List<string> GetSheetOrder(string catalogType, string fullName)
         {
             List<string> sheetOrder = new List<string>();
 
             // open sheet order workbook
-            WorkbookSheetOrder = Excel.Workbooks.Open(SheetOrderInputFile.Text);
+            //WorkbookSheetOrder = Excel.Workbooks.Open(SheetOrderInputFile.Text);
+            WorkbookSheetOrder = ExcelUtility.GetWorkbook(fullName);
 
             // get sheet order
             int startCol = 1;
