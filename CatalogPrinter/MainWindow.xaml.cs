@@ -91,8 +91,6 @@ namespace CatalogPrinter
                 // open temp workbook to which the sheets of interest are copied to
                 Workbook2Print = ExcelUtility.XlApp.Workbooks.Add();
                 Workbook2Print?.SaveAs(_tmpWorkbook);
-                //Workbook2Print?.Close(true);
-                //Workbook2Print = Excel.Workbooks.Open(_tmpWorkbook);
 
                 // get sheet order to print
                 var sheetOrder = GetSheetOrder(catalogType, clientCatalog);

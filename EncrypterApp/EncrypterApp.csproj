@@ -47,9 +47,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Encrypter\Encrypter.csproj">
       <Project>{bdc4976e-85ae-4ee7-b32c-f85a2f47169d}</Project>
       <Name>Encrypter</Name>
