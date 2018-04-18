@@ -134,7 +134,7 @@ namespace CatalogPrinter
                     throw new Exception(outputFile + " is open, please close it and press 'Print' again.");
                 foreach (Worksheet sh in Workbook2Print.Worksheets)
                     FormatSheet(sh);
-                Workbook2Print.ExportAsFixedFormat(XlFixedFormatType.xlTypePDF, outputFile);                
+                Workbook2Print.ExportAsFixedFormat(XlFixedFormatType.xlTypePDF, outputFile, OpenAfterPublish: true);                
 
                 MessageBox.Show("Done!");
 
@@ -178,7 +178,7 @@ namespace CatalogPrinter
             sh.PageSetup.LeftFooter = leftFooter;
             sh.PageSetup.RightFooter = rightFooter;
 
-            sh.PageSetup.PrintArea = "D2:I30";
+            sh.PageSetup.PrintArea = "D2:N30";
 
             sh.PageSetup.Zoom = false;
             sh.PageSetup.FitToPagesWide = 1;
