@@ -20,6 +20,6 @@
                   Width="Auto" IsDropDownOpen="False" MaxDropDownHeight="200" Height="Auto" SelectionChanged="CatalogTypeComboBox_SelectionChanged" FontSize="24" >            
         </ComboBox>
         <Button Height="Auto" Width="Auto" Grid.Row ="2"  Grid.RowSpan="1"
-                Content="Print Sheets" Click="Print_Button_Click"/>
+                Content="Print naar pdf" Click="Print_Button_Click"/>
     </Grid>
 </Window>
