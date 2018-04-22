@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("EncrypterApp")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Encryption application")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Hewlett-Packard Company")]
-[assembly: AssemblyProduct("EncrypterApp")]
-[assembly: AssemblyCopyright("Copyright © Hewlett-Packard Company 2018")]
+[assembly: AssemblyCompany("Applied Soft Service")]
+[assembly: AssemblyProduct("CatalogPrinter")]
+[assembly: AssemblyCopyright("Copyright © Applied Soft Service")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
