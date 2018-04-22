@@ -32,7 +32,8 @@ namespace CatalogPrinter
         public Workbook WorkbookSheetOrder { get; set; }
         public Workbook Workbook2Print { get; set; }
 
-        private readonly string _tmpWorkbook = @"C:\temp\temp.xlsx";
+        private readonly string _tmpWorkbookDir = @"C:\temp";
+        private readonly string _tmpWokbookName = @"\temp.xslx";
 
         public MainWindow()
         {
@@ -97,7 +98,9 @@ namespace CatalogPrinter
 
                 // open temp workbook to which the sheets of interest are copied to
                 Workbook2Print = ExcelUtility.XlApp.Workbooks.Add();
-                Workbook2Print?.SaveAs(_tmpWorkbook);
+                if (!Directory.Exists(_tmpWorkbookDir))
+                    Directory.CreateDirectory(_tmpWorkbookDir);
+                Workbook2Print?.SaveAs(_tmpWorkbookDir + _tmpWokbookName);
 
                 // get sheet order to print
                 var sheetOrder = GetSheetOrder(catalogType, clientCatalog);
@@ -148,7 +151,7 @@ namespace CatalogPrinter
                 ExcelUtility.CloseWorkbook(Workbook, false);
                 ExcelUtility.CloseWorkbook(WorkbookSheetOrder, false);
                 ExcelUtility.CloseWorkbook(Workbook2Print, true);
-                File.Delete(_tmpWorkbook);
+                File.Delete(_tmpWorkbookDir + _tmpWokbookName);
 
                 ExcelUtility.CloseExcel();
             }
