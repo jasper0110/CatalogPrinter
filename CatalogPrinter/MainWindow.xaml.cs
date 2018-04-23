@@ -105,6 +105,8 @@ namespace CatalogPrinter
                 // get sheet order to print
                 var sheetOrder = GetSheetOrder(catalogType, clientCatalog);
 
+                string leftHeader = "null", centerHeader = "null", rightHeader = "null", leftFooter = "null", rightFooter = "null";
+
                 // copy necessary sheets to temp workbook and put sheets in correct order
                 foreach (var shName in sheetOrder)
                 {
@@ -114,13 +116,24 @@ namespace CatalogPrinter
                     // set catalog type
                     Workbook.Sheets[shName].Cells[11, 2] = catalogType;
 
+                    leftHeader = (Workbook.Sheets[shName].Cells[16, 2] as Range).Value as string ?? "null";
+                    centerHeader = (Workbook.Sheets[shName].Cells[17, 2] as Range).Value as string ?? "null";
+                    var rightHeaderDate = ((Workbook.Sheets[shName].Cells[18, 2] as Range).Value);
+                    rightHeader = "null";
+                    if (rightHeaderDate != null)
+                        rightHeader = rightHeaderDate.ToString("dd/MM/yyyy");
+                    leftFooter = (Workbook.Sheets[shName].Cells[19, 2] as Range).Value as string ?? "null";
+                    rightFooter = (Workbook.Sheets[shName].Cells[20, 2] as Range).Value as string ?? "null";
+
                     // copy sheet
                     if (catalogType == "Particulier")
                     {
-                        SetBtwField(Workbook.Sheets[shName], true);
+                        //SetBtwField(Workbook.Sheets[shName], true);
                         Workbook.Sheets[shName].Copy(After: Workbook2Print.Sheets[Workbook2Print.Sheets.Count]);
-                        SetBtwField(Workbook.Sheets[shName], false);
+                        Workbook2Print.Sheets[Workbook2Print.Sheets.Count].Cells[8, 2] = "ja";
+                        //SetBtwField(Workbook.Sheets[shName], false);
                         Workbook.Sheets[shName].Copy(After: Workbook2Print.Sheets[Workbook2Print.Sheets.Count]);
+                        Workbook2Print.Sheets[Workbook2Print.Sheets.Count].Cells[8, 2] = "neen";
                     }
                     else
                     {
@@ -136,7 +149,7 @@ namespace CatalogPrinter
                 if (ExcelUtility.IsFileInUse(outputFile))
                     throw new Exception(outputFile + " is open, please close it and press 'Print' again.");
                 foreach (Worksheet sh in Workbook2Print.Worksheets)
-                    FormatSheet(sh);
+                    FormatSheet(sh, leftHeader, centerHeader, rightHeader, leftFooter, rightFooter);
                 Workbook2Print.ExportAsFixedFormat(XlFixedFormatType.xlTypePDF, outputFile, OpenAfterPublish: true);                
 
                 MessageBox.Show("Done!");
@@ -164,17 +177,8 @@ namespace CatalogPrinter
             sh.Cells[8, 2] = value;
         }
 
-            private void FormatSheet(Worksheet sh)
-        {
-            string leftHeader = (sh.Cells[16, 2] as Range).Value as string ?? "null";
-            string centerHeader = (sh.Cells[17, 2] as Range).Value as string ?? "null";
-            var rightHeaderDate = ((sh.Cells[18, 2] as Range).Value);
-            string rightHeader = "null";
-            if (rightHeaderDate != null)
-                rightHeader = rightHeaderDate.ToString("dd/MM/yyyy");
-            string leftFooter = (sh.Cells[19, 2] as Range).Value as string ?? "null";
-            string rightFooter = (sh.Cells[20, 2] as Range).Value as string ?? "null";
-
+        private void FormatSheet(Worksheet sh, string leftHeader, string centerHeader, string rightHeader, string leftFooter, string rightFooter)
+        {    
             sh.PageSetup.LeftHeader = leftHeader;
             sh.PageSetup.CenterHeader = centerHeader;
             sh.PageSetup.RightHeader = rightHeader;
