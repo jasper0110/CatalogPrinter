@@ -219,7 +219,8 @@ namespace CatalogPrinter
                 }
             }
             if (selectedCol < 1)
-                throw new Exception(catalogType + " not found in sheet " + Workbook.Worksheets[1].Name);
+                throw new Exception(catalogType + " not found in sheet " + WorkbookSheetOrder.Worksheets[1].Name 
+                    + " of workbook " + WorkbookSheetOrder.Name);
 
             Range startCell = WorkbookSheetOrder.Worksheets[1].Cells[2, selectedCol];
             int lastRow = WorkbookSheetOrder.Worksheets[1].Cells[2, selectedCol].End(XlDirection.xlDown).Row;
