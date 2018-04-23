@@ -33,7 +33,7 @@ namespace CatalogPrinter
         public Workbook Workbook2Print { get; set; }
 
         private readonly string _tmpWorkbookDir = @"C:\temp";
-        private readonly string _tmpWokbookName = @"\temp.xslx";
+        private readonly string _tmpWokbookName = @"\temp.xlsx";
 
         public MainWindow()
         {
